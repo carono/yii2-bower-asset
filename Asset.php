@@ -3,7 +3,7 @@
 
 namespace carono\yii2bower;
 
-use app\helpers\StringHelper;
+use yii\helpers\StringHelper;
 use yii\helpers\Inflector;
 use yii\helpers\VarDumper;
 use yii\web\AssetBundle;
@@ -27,16 +27,30 @@ class Asset extends AssetBundle
         parent::init();
     }
 
+    /**
+     * @param $package
+     * @param $namespace
+     * @return string
+     */
     public static function getPackageClass($package, $namespace)
     {
         return $namespace . '\\' . self::formClassNameFromPackage($package);
     }
 
+    /**
+     * @param $package
+     * @return string
+     */
     public static function formClassNameFromPackage($package)
     {
         return Inflector::camelize($package);
     }
 
+    /**
+     * @param $package
+     * @param $namespace
+     * @param array $files
+     */
     public static function createAssetClass($package, $namespace, $files = [])
     {
         $bowerJson = \Yii::getAlias('@bower') . '/' . $package . '/bower.json';
@@ -83,6 +97,10 @@ PHP;
         file_put_contents($file, $template);
     }
 
+    /**
+     * @param $package
+     * @return bool
+     */
     protected function assetExists($package)
     {
         return class_exists(self::getPackageClass($package, $this->packageNamespace));
