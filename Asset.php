@@ -112,7 +112,7 @@ PHP;
         if (!is_dir($dir)) {
             mkdir($dir, 0777, true);
         }
-        $file = $dir . '\\' . $class . '.php';
+        $file = $dir . DIRECTORY_SEPARATOR . $class . '.php';
         file_put_contents($file, $template);
     }
 
