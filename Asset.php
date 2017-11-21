@@ -4,6 +4,7 @@
 namespace carono\yii2bower;
 
 use yii\helpers\ArrayHelper;
+use yii\helpers\FileHelper;
 use yii\helpers\StringHelper;
 use yii\helpers\Inflector;
 use yii\helpers\VarDumper;
@@ -15,15 +16,22 @@ class Asset extends AssetBundle
 
     public $packages = [];
 
+    protected static $_installedPackages = [];
+
     public function init()
     {
         $timestamp = $this->getFileTimestamp(self::getClassFile(get_class($this)));
+        self::loadPackages();
         foreach ($this->packages as $idx => $value) {
             $package = is_numeric($idx) ? $value : $idx;
             $files = is_numeric($idx) ? [] : $value;
+            if (!self::packageInstalled($package)) {
+                continue;
+            }
             if (!$this->assetExists($package) || $this->needRewrite($package)) {
-                self::createAssetClass($package, $this->packageNamespace, $files);
-                touch(self::getPackageFile($package, $this->packageNamespace), $timestamp);
+                if ($classFile = self::createAssetClass($package, $this->packageNamespace, $files)) {
+                    touch($classFile, $timestamp);
+                }
             };
             $this->depends[] = self::getPackageClass($package, $this->packageNamespace);
         }
@@ -59,6 +67,26 @@ class Asset extends AssetBundle
         return self::getClassFile(self::getPackageClass($package, $namespace));
     }
 
+    public static function packageInstalled($package)
+    {
+        if (!self::$_installedPackages) {
+            self::loadPackages();
+        }
+        return isset(self::$_installedPackages[$package]);
+    }
+
+    public static function loadPackages()
+    {
+        self::$_installedPackages = [];
+        foreach (glob(\Yii::getAlias("@bower/**/bower.json")) as $file) {
+            $json = json_decode(file_get_contents($file), true);
+            if (($name = ArrayHelper::getValue($json, 'name'))) {
+                self::$_installedPackages[$name] = $file;
+            }
+        }
+    }
+
+
     /**
      * @param $package
      * @param $namespace
@@ -66,14 +94,17 @@ class Asset extends AssetBundle
      */
     public static function createAssetClass($package, $namespace, $files = [])
     {
-        $dir = \Yii::getAlias("@bower/$package");
-        $bowerJson = "$dir/bower.json";
-        if (file_exists($bowerJson)) {
-            $json = json_decode(file_get_contents($bowerJson), true);
-            $main = ArrayHelper::getValue($json, 'main', []);
+        if (isset(self::$_installedPackages[$package])) {
+            $file = self::$_installedPackages[$package];
+            $bowerJson = json_decode(file_get_contents($file), true);
+            if (!$main = ArrayHelper::getValue($bowerJson, 'main')) {
+                return;
+            }
         } else {
-            $main = [];
+            \Yii::warning("Bower $package package not found");
+            return;
         }
+        $dir = basename(dirname($file));
         $js = [];
         $css = [];
         $main = $files ? $files : (is_array($main) ? $main : [$main]);
@@ -99,7 +130,7 @@ use yii\web\View;
 
 class $class extends AssetBundle
 {
-    public \$sourcePath = '@vendor/bower/$package';
+    public \$sourcePath = '@bower/$dir';
     public \$baseUrl = '@web';
     public \$jsOptions = ['position' => View::POS_END];
     public \$js
@@ -114,6 +145,7 @@ PHP;
         }
         $file = $dir . DIRECTORY_SEPARATOR . $class . '.php';
         file_put_contents($file, $template);
+        return $file;
     }
 
     /**
