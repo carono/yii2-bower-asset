@@ -25,7 +25,7 @@ class Asset extends AssetBundle
         foreach ($this->packages as $idx => $value) {
             $package = is_numeric($idx) ? $value : $idx;
             $files = is_numeric($idx) ? [] : $value;
-            if (!self::packageInstalled($package)) {
+            if (!self::packageInstalled($package) && !self::packageAsFolder($package)) {
                 continue;
             }
             if (!$this->assetExists($package) || $this->needRewrite($package)) {
@@ -67,6 +67,11 @@ class Asset extends AssetBundle
         return self::getClassFile(self::getPackageClass($package, $namespace));
     }
 
+    public static function packageAsFolder($package)
+    {
+        return is_dir(\Yii::getAlias("@bower/$package"));
+    }
+
     public static function packageInstalled($package)
     {
         if (!self::$_installedPackages) {
@@ -78,7 +83,7 @@ class Asset extends AssetBundle
     public static function loadPackages()
     {
         self::$_installedPackages = [];
-        foreach (glob(\Yii::getAlias("@bower/**/{bower,package}.json"), GLOB_BRACE) as $file) {
+        foreach (glob(\Yii::getAlias("@bower/**/bower.json"), GLOB_BRACE) as $file) {
             $json = json_decode(file_get_contents($file), true);
             if (($name = ArrayHelper::getValue($json, 'name'))) {
                 self::$_installedPackages[$name] = $file;
@@ -86,25 +91,48 @@ class Asset extends AssetBundle
         }
     }
 
+    public static function getPackageJson($package)
+    {
+        if (isset(self::$_installedPackages[$package])) {
+            $file = self::$_installedPackages[$package];
+            return json_decode(file_get_contents($file), true);
+        } elseif (self::packageAsFolder($package)) {
+            return [];
+        } else {
+            return null;
+        }
+    }
+
+    public static function getPackageDir($package)
+    {
+        if (isset(self::$_installedPackages[$package])) {
+            $file = self::$_installedPackages[$package];
+            return basename(dirname($file));
+        } elseif (self::packageAsFolder($package)) {
+            return $package;
+        } else {
+            return null;
+        }
+    }
 
     /**
      * @param $package
      * @param $namespace
      * @param array $files
+     * @return mixed|string
      */
     public static function createAssetClass($package, $namespace, $files = [])
     {
-        if (isset(self::$_installedPackages[$package])) {
-            $file = self::$_installedPackages[$package];
-            $bowerJson = json_decode(file_get_contents($file), true);
-            if (!$main = ArrayHelper::getValue($bowerJson, 'main')) {
-                return;
-            }
-        } else {
+        $bowerJson = self::getPackageJson($package);
+
+        if (is_null($bowerJson)) {
             \Yii::warning("Bower $package package not found");
-            return;
+            return false;
         }
-        $dir = basename(dirname($file));
+
+        $main = ArrayHelper::getValue($bowerJson, 'main');
+
+        $dir = self::getPackageDir($package);
         $js = [];
         $css = [];
         $main = $files ? $files : (is_array($main) ? $main : [$main]);
