@@ -78,7 +78,7 @@ class Asset extends AssetBundle
     public static function loadPackages()
     {
         self::$_installedPackages = [];
-        foreach (glob(\Yii::getAlias("@bower/**/bower.json")) as $file) {
+        foreach (glob(\Yii::getAlias("@bower/**/{bower,package}.json"), GLOB_BRACE) as $file) {
             $json = json_decode(file_get_contents($file), true);
             if (($name = ArrayHelper::getValue($json, 'name'))) {
                 self::$_installedPackages[$name] = $file;
