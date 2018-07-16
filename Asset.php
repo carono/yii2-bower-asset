@@ -25,7 +25,7 @@ class Asset extends AssetBundle
         foreach ($this->packages as $idx => $value) {
             $package = is_numeric($idx) ? $value : $idx;
             $files = is_numeric($idx) ? [] : $value;
-            if (!static::packageInstalled($package, $this->alias) && !static::packageAsFolder($this->alias, $package)) {
+            if (!static::packageInstalled($package, $this->alias) && !static::packageAsFolder($package, $this->alias)) {
                 continue;
             }
             if (!$this->assetExists($package) || $this->needRewrite($package)) {
