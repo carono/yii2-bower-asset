@@ -4,11 +4,11 @@
 namespace carono\yii2bower;
 
 use yii\helpers\ArrayHelper;
-use yii\helpers\FileHelper;
-use yii\helpers\StringHelper;
 use yii\helpers\Inflector;
+use yii\helpers\StringHelper;
 use yii\helpers\VarDumper;
 use yii\web\AssetBundle;
+use yii\web\View;
 
 class Asset extends AssetBundle
 {
@@ -119,6 +119,24 @@ class Asset extends AssetBundle
         return null;
     }
 
+    protected static function filesToConfig($files)
+    {
+        $config = [];
+        foreach ($files as $key => $file) {
+            if (!is_numeric($key)) {
+                $config[$key] = $file;
+                continue;
+            }
+            if (StringHelper::endsWith($file, '.css')) {
+                $config['css'][] = ltrim($file, "./\\");
+            }
+            if (StringHelper::endsWith($file, '.js')) {
+                $config['js'][] = ltrim($file, "./\\");
+            }
+        }
+        return $config;
+    }
+
     /**
      * @param $package
      * @param $namespace
@@ -128,30 +146,33 @@ class Asset extends AssetBundle
      */
     public static function createAssetClass($package, $namespace, $alias, $files = [])
     {
-        $bowerJson = static::getPackageJson($package, $alias);
+        $cofingJson = static::getPackageJson($package, $alias);
 
-        if (is_null($bowerJson)) {
+        if (is_null($cofingJson)) {
             \Yii::warning("Bower $package package not found");
             return false;
         }
 
-        $main = ArrayHelper::getValue($bowerJson, 'main');
+        $main = ArrayHelper::getValue($cofingJson, 'main');
 
         $dir = static::getPackageDir($package, $alias);
-        $js = [];
-        $css = [];
-        $main = $files ? $files : (is_array($main) ? $main : [$main]);
-        foreach ($main as $file) {
-            if (StringHelper::endsWith($file, '.css')) {
-                $css[] = ltrim($file, "./\\");
-            }
-            if (StringHelper::endsWith($file, '.js')) {
-                $js[] = ltrim($file, "./\\");
-            }
+
+        $defaultConfig = [
+            'baseUrl' => '@web',
+            'jsOptions' => ['position' => View::POS_END]
+        ];
+        $packageConfig = self::filesToConfig($files ?: (array)$main);
+        $sourcePath = implode('/', array_filter([
+            $alias,
+            $dir,
+            trim(ArrayHelper::remove($packageConfig, 'sourcePath'), '/')
+        ]));
+        $config = ArrayHelper::merge($defaultConfig, $packageConfig, ['sourcePath' => $sourcePath]);
+        $str = '';
+        foreach ($config as $key => $value) {
+            $str .= '    public $' . $key . ' = ' . VarDumper::export($value) . ";\n";
         }
         $class = static::formClassNameFromPackage($package);
-        $js = VarDumper::export($js);
-        $css = VarDumper::export($css);
         $template = <<<PHP
 <?php
 
@@ -163,13 +184,7 @@ use yii\web\View;
 
 class $class extends AssetBundle
 {
-    public \$sourcePath = '$alias/$dir';
-    public \$baseUrl = '@web';
-    public \$jsOptions = ['position' => View::POS_END];
-    public \$js
-        = $js;
-    public \$css
-        = $css;
+$str
 }
 PHP;
         $dir = \Yii::getAlias('@' . str_replace('\\', '/', ltrim($namespace, '\\')));
