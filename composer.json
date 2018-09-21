@@ -4,8 +4,8 @@
   "type": "library",
   "keywords": [
     "yii2",
-	"bower",
-	"assets"
+    "bower",
+    "assets"
   ],
   "license": "MIT",
   "authors": [
@@ -21,6 +21,12 @@
     }
   },
   "require": {
-	"yiisoft/yii2": "~2.0"
-  }
+    "yiisoft/yii2": "~2.0"
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://asset-packagist.org"
+    }
+  ]
 }

@@ -20,10 +20,11 @@ use carono\yii2bower\Asset;
 class BowerAsset extends Asset
 {
     public $packages = [
-        'jquery.inputmask',             // Указываем имя пакета, скрипты подключаются автоматически
-        'font-awesome' => [             // В секции main нет стилей - указываем напрямую 
-            'css\font-awesome.min.css'
-        ]
+        'jquery.inputmask', // Указываем имя пакета, скрипты подключаются автоматически
+        'fontawesome' => [
+            'sourcePath' => 'web-fonts-with-css', // Указываем папку внутри пакета
+            'css/fontawesome-all.css' // Подключаем стиль вручную
+        ],
     ];
 }
 ```

@@ -146,14 +146,14 @@ class Asset extends AssetBundle
      */
     public static function createAssetClass($package, $namespace, $alias, $files = [])
     {
-        $cofingJson = static::getPackageJson($package, $alias);
+        $configJson = static::getPackageJson($package, $alias);
 
-        if (is_null($cofingJson)) {
+        if ($configJson === null) {
             \Yii::warning("Bower $package package not found");
             return false;
         }
 
-        $main = ArrayHelper::getValue($cofingJson, 'main');
+        $main = ArrayHelper::getValue($configJson, 'main');
 
         $dir = static::getPackageDir($package, $alias);
 
