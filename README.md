@@ -1,7 +1,11 @@
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/carono/yii2-bower-asset/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/carono/yii2-bower-asset/?branch=master)
+[![Latest Stable Version](https://poser.pugx.org/carono/yii2-bower-asset/v/stable)](https://packagist.org/packages/carono/yii2-bower-asset)
+[![Total Downloads](https://poser.pugx.org/carono/yii2-bower-asset/downloads)](https://packagist.org/packages/carono/yii2-bower-asset)
+[![License](https://poser.pugx.org/carono/yii2-bower-asset/license)](https://packagist.org/packages/carono/yii2-bower-asset)
+
 # Для чего
 Данный пакет используется для быстрого подключения стилей и скриптов из bower пакетов. Файлы подключаются автоматически,
-так же можно и указать вручную.
-
+так же можно и указать вручную. 
 # Как подключить
 `composer require carono/yii2-bower-asset`
 
