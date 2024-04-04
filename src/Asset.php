@@ -165,7 +165,7 @@ class Asset extends AssetBundle
         $sourcePath = implode('/', array_filter([
             $alias,
             $dir,
-            trim(ArrayHelper::remove($packageConfig, 'sourcePath'), '/')
+            trim((string)ArrayHelper::remove($packageConfig, 'sourcePath', ''), '/')
         ]));
         $config = ArrayHelper::merge($defaultConfig, $packageConfig, ['sourcePath' => $sourcePath]);
         $str = '';
