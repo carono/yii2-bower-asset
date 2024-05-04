@@ -30,7 +30,7 @@ class Asset extends AssetBundle
             }
             if (!$this->assetExists($package) || $this->needRewrite($package)) {
                 if ($classFile = static::createAssetClass($package, $this->packageNamespace, $this->alias, $files)) {
-                    touch($classFile, $timestamp);
+                    touch($classFile, (int)$timestamp);
                 }
             };
             $this->depends[] = static::getPackageClass($package, $this->packageNamespace);
